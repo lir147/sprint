@@ -4,8 +4,10 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import json
 
+# Логирование
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class DatabaseHandler:
     def __init__(self):
@@ -16,6 +18,7 @@ class DatabaseHandler:
         self.database = os.getenv('FSTR_DB_NAME', 'postgres')
 
     def get_connection(self):
+        """Подключение к БД"""
         return psycopg2.connect(
             host=self.host,
             port=self.port,
@@ -27,6 +30,7 @@ class DatabaseHandler:
         )
 
     def add_pereval(self, raw_data, images):
+        """Добавление перевала в БД"""
         query = """
         INSERT INTO pereval_added (raw_data, images, status, date_added)
         VALUES (%s, %s, 'new', NOW())
@@ -36,8 +40,9 @@ class DatabaseHandler:
         try:
             conn = self.get_connection()
             with conn.cursor() as cur:
-                raw_data_json = json.dumps(raw_data)
-                images_json = json.dumps(images)
+                # сериализация в JSON-строки
+                raw_data_json = json.dumps(raw_data, ensure_ascii=False)
+                images_json = json.dumps(images, ensure_ascii=False)
 
                 cur.execute(query, (raw_data_json, images_json))
                 pereval_id = cur.fetchone()['id']
@@ -54,6 +59,7 @@ class DatabaseHandler:
                 conn.close()
 
     def get_all_perevals(self):
+        """Получение всех перевалов"""
         query = "SELECT id, raw_data, status, date_added FROM pereval_added ORDER BY date_added DESC"
         conn = None
         try:
@@ -61,8 +67,12 @@ class DatabaseHandler:
             with conn.cursor() as cur:
                 cur.execute(query)
                 results = cur.fetchall()
+
+
                 for r in results:
-                    r['raw_data'] = json.loads(r['raw_data'])
+                    if isinstance(r['raw_data'], str):
+                        r['raw_data'] = json.loads(r['raw_data'])
+
                 return results
         except Exception as e:
             logger.error(f"Ошибка получения перевалов: {e}")

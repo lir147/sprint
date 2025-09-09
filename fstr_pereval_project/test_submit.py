@@ -1,14 +1,20 @@
 import requests
+import json
 
 url = "http://127.0.0.1:8080/submitData"
+
 data = {
     "raw_data": {
-        "title": "Перевал Тестовый",
-        "height": 2500,
-        "coordinates": {"lat": 42.123, "lon": 44.456}
+        "name": "Перевал Тестовый",
+        "height": 3000,
+        "region": "Кавказ"
     },
-    "images": []
+    "images": [
+        {"url": "http://example.com/test1.jpg"},
+        {"url": "http://example.com/test2.jpg"}
+    ]
 }
 
 response = requests.post(url, json=data)
-print(response.status_code, response.json())
+print("Status code:", response.status_code)
+print("Response JSON:", response.json())
