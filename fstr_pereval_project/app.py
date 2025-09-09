@@ -1,14 +1,12 @@
 from flask import Flask, request, jsonify, render_template_string
 from database_handler import DatabaseHandler
 import logging
-import json
 
 app = Flask(__name__)
 db_handler = DatabaseHandler()
 
 logging.basicConfig(level=logging.INFO)
 
-# POST /submitData
 @app.route('/submitData', methods=['POST'])
 def submit_data():
     try:
@@ -17,28 +15,46 @@ def submit_data():
             return jsonify({"error": "Missing required fields: 'raw_data' and 'images'"}), 400
 
 
-        raw_data_json = json.dumps(data['raw_data'])
-        images_json = json.dumps(data['images'])
+        pereval_id = db_handler.add_pereval(data['raw_data'], data['images'])
 
-        pereval_id = db_handler.add_pereval(raw_data_json, images_json)
-        return jsonify({"success": True, "message": "Перевал добавлен", "pereval_id": pereval_id}), 201
+        return jsonify({
+            "success": True,
+            "message": "Перевал добавлен",
+            "pereval_id": pereval_id
+        }), 201
+
     except Exception as e:
         logging.error(f"Ошибка в API: {e}")
         return jsonify({"error": str(e)}), 500
 
-
+# ===== GET /perevals =====
 @app.route('/perevals', methods=['GET'])
 def list_perevals():
     try:
-        perevals = db_handler.get_all_perevals()
+        perevals = db_handler.get_all_perevals()  # список словарей
+
+        # Простая HTML-таблица
         html = """
         <h1>Список перевалов</h1>
         <table border="1" cellpadding="5">
-        <tr><th>ID</th><th>Data</th><th>Status</th><th>Date Added</th></tr>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Высота</th>
+            <th>Координаты</th>
+            <th>Status</th>
+            <th>Date Added</th>
+        </tr>
         {% for p in perevals %}
         <tr>
             <td>{{ p['id'] }}</td>
-            <td>{{ p['raw_data'] }}</td>
+            <td>{{ p['raw_data']['title'] }}</td>
+            <td>{{ p['raw_data'].get('height', '') }}</td>
+            <td>
+                {% if p['raw_data'].get('coordinates') %}
+                    {{ p['raw_data']['coordinates'].get('lat', '') }}, {{ p['raw_data']['coordinates'].get('lon', '') }}
+                {% endif %}
+            </td>
             <td>{{ p['status'] }}</td>
             <td>{{ p['date_added'] }}</td>
         </tr>
@@ -46,9 +62,11 @@ def list_perevals():
         </table>
         """
         return render_template_string(html, perevals=perevals)
+
     except Exception as e:
         logging.error(f"Ошибка при выводе перевалов: {e}")
         return f"Ошибка: {str(e)}", 500
 
+# ===== Запуск сервера =====
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)

@@ -2,6 +2,7 @@ import os
 import logging
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class DatabaseHandler:
             cursor_factory=RealDictCursor
         )
 
-    def add_pereval(self, raw_data_json, images_json):
+    def add_pereval(self, raw_data, images):
         query = """
         INSERT INTO pereval_added (raw_data, images, status, date_added)
         VALUES (%s, %s, 'new', NOW())
@@ -35,6 +36,9 @@ class DatabaseHandler:
         try:
             conn = self.get_connection()
             with conn.cursor() as cur:
+                raw_data_json = json.dumps(raw_data)
+                images_json = json.dumps(images)
+
                 cur.execute(query, (raw_data_json, images_json))
                 pereval_id = cur.fetchone()['id']
                 conn.commit()
@@ -57,8 +61,9 @@ class DatabaseHandler:
             with conn.cursor() as cur:
                 cur.execute(query)
                 results = cur.fetchall()
+                # Преобразуем JSON-строку обратно в Python dict
                 for r in results:
-                    r['raw_data'] = r['raw_data']
+                    r['raw_data'] = json.loads(r['raw_data'])
                 return results
         except Exception as e:
             logger.error(f"Ошибка получения перевалов: {e}")
