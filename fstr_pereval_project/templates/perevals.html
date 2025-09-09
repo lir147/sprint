@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Список перевалов</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">📌 Список перевалов</h2>
+    <table class="table table-bordered table-striped table-hover shadow">
+        <thead class="table-primary text-center">
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Высота</th>
+                <th>Регион</th>
+                <th>Фото</th>
+                <th>Статус</th>
+                <th>Дата добавления</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in perevals %}
+            <tr>
+                <td>{{ p.id }}</td>
+                <td>{{ p.raw_data.name }}</td>
+                <td>{{ p.raw_data.height }}</td>
+                <td>{{ p.raw_data.region }}</td>
+                <td>
+                    {% if p.images %}
+                        {% for img in p.images %}
+                            <a href="{{ img.url }}" target="_blank">
+                                <img src="{{ img.url }}" alt="Фото" style="height:50px; border-radius:5px; margin:2px;">
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <span class="text-muted">Нет фото</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.status }}</td>
+                <td>{{ p.date_added }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="text-center mt-3">
+        <a href="/" class="btn btn-outline-primary">← На главную</a>
+        <a href="/submitData" class="btn btn-success">➕ Добавить перевал</a>
+    </div>
+</div>
+</body>
+</html>

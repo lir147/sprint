@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>FSTR Pereval API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f9fc;
+            color: #333;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        code {
+            background: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        pre {
+            background: #2d3436;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <h1>FSTR Pereval API</h1>
+    <p>Добро пожаловать! 🚀</p>
+    <ul>
+        <li><b>POST</b> <a href="/submitData"><code>/submitData</code></a> — добавить новый перевал (нужен JSON-запрос)</li>
+        <li><b>GET</b> <a href="/perevals"><code>/perevals</code></a> — посмотреть список перевалов</li>
+    </ul>
+
+    <p>Пример POST-запроса через <code>test_submit.py</code> или Postman:</p>
+    <pre>
+POST http://127.0.0.1:8080/submitData
+Content-Type: application/json
+
+{
+  "raw_data": {"name": "Перевал X", "height": 3000},
+  "images": [{"url": "http://example.com/img1.jpg"}]
+}
+    </pre>
+</body>
+</html>

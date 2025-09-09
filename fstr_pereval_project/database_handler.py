@@ -59,8 +59,7 @@ class DatabaseHandler:
                 conn.close()
 
     def get_all_perevals(self):
-        """Получение всех перевалов"""
-        query = "SELECT id, raw_data, status, date_added FROM pereval_added ORDER BY date_added DESC"
+        query = "SELECT id, raw_data, images, status, date_added FROM pereval_added ORDER BY date_added DESC"
         conn = None
         try:
             conn = self.get_connection()
@@ -68,10 +67,14 @@ class DatabaseHandler:
                 cur.execute(query)
                 results = cur.fetchall()
 
-
                 for r in results:
+                    # если строка — декодируем
                     if isinstance(r['raw_data'], str):
                         r['raw_data'] = json.loads(r['raw_data'])
+                    if isinstance(r['images'], str):
+                        r['images'] = json.loads(r['images'])
+                    elif r['images'] is None:
+                        r['images'] = []
 
                 return results
         except Exception as e:
