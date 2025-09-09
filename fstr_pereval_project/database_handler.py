@@ -61,7 +61,6 @@ class DatabaseHandler:
             with conn.cursor() as cur:
                 cur.execute(query)
                 results = cur.fetchall()
-                # Преобразуем JSON-строку обратно в Python dict
                 for r in results:
                     r['raw_data'] = json.loads(r['raw_data'])
                 return results

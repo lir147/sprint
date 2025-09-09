@@ -32,8 +32,6 @@ def submit_data():
 def list_perevals():
     try:
         perevals = db_handler.get_all_perevals()  # список словарей
-
-        # Простая HTML-таблица
         html = """
         <h1>Список перевалов</h1>
         <table border="1" cellpadding="5">
