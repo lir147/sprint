@@ -27,11 +27,11 @@ def submit_data():
         return render_template("submit.html")
 
     try:
-        if request.is_json:  # если JSON (Postman, скрипт)
+        if request.is_json:
             data = request.get_json()
             raw_data = data.get("raw_data")
             images = data.get("images", [])
-        else:  # если форма (браузер)
+        else:
             raw_data = {
                 "name": request.form.get("name"),
                 "height": request.form.get("height"),

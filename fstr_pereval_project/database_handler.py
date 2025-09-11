@@ -68,7 +68,7 @@ class DatabaseHandler:
                 results = cur.fetchall()
 
                 for r in results:
-                    # если строка — декодируем
+
                     if isinstance(r['raw_data'], str):
                         r['raw_data'] = json.loads(r['raw_data'])
                     if isinstance(r['images'], str):
