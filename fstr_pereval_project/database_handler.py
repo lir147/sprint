@@ -27,7 +27,7 @@ class DatabaseHandler:
             user=self.user,
             password=self.password,
             dbname=self.database,
-            sslmode=ssl_mode,
+            sslmode='require',
             connect_timeout=10,
             cursor_factory=RealDictCursor
         )
