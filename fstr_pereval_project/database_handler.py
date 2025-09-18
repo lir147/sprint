@@ -28,6 +28,7 @@ class DatabaseHandler:
             password=self.password,
             dbname=self.database,
             sslmode=ssl_mode,
+            sslrootcert=r"C:\postgres_ssl\Control-D-root-x1.cer",
             cursor_factory=RealDictCursor
         )
         conn.set_client_encoding('UTF8')
