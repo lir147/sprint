@@ -27,7 +27,7 @@ class DatabaseHandler:
             user=self.user,
             password=self.password,
             dbname=self.database,
-            sslmode='allow',
+            sslmode=ssl_mode,
             cursor_factory=RealDictCursor
         )
         conn.set_client_encoding('UTF8')
