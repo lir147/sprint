@@ -10,12 +10,13 @@ logger = logging.getLogger(__name__)
 
 # ----------------- DatabaseHandler -----------------
 class DatabaseHandler:
-    def __init__(self):
-        self.host = os.getenv('FSTR_DB_HOST', 'localhost')
-        self.port = os.getenv('FSTR_DB_PORT', '5432')
-        self.user = os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'postgres'))
-        self.password = os.getenv('FSTR_DB_PASS', '123654')
-        self.database = os.getenv('FSTR_DB_NAME', 'postgres')
+    def __init__(self, host=None, port=None, user=None, password=None, database=None):
+        self.host = host or os.getenv('FSTR_DB_HOST', 'localhost')
+        self.port = port or os.getenv('FSTR_DB_PORT', '5432')
+        self.user = user or os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'postgres'))
+        self.password = password or os.getenv('FSTR_DB_PASS', '123654')
+        self.database = database or os.getenv('FSTR_DB_NAME', 'postgres')
+
 
     def get_connection(self):
         """Создать подключение к БД"""
@@ -153,7 +154,7 @@ class DatabaseHandler:
 
     # ----------------- Получение перевалов по email -----------------
     def get_perevals_by_email(self, email):
-        query = "SELECT id, raw_data, images, status, date_added, date_updated FROM pereval_added WHERE (raw_data->>'email') = %s"
+        query = "SELECT id, raw_data, images, status, date_added, date_updated FROM pereval_added WHERE (raw_data->'user'->>'email') = %s"
         conn = None
         try:
             conn = self.get_connection()
@@ -236,6 +237,26 @@ class DatabaseHandler:
         except Exception as e:
             logger.error(f"Ошибка получения изображения {image_id}: {e}")
             raise
+        finally:
+            if conn:
+                conn.close()
+
+ # ----------------- Удаление перевала -----------------
+    def delete_pereval(self, pereval_id):
+        query = "DELETE FROM pereval_added WHERE id = %s"
+        conn = None
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cur:
+                cur.execute(query, (pereval_id,))
+                conn.commit()
+                logger.info(f"Перевал {pereval_id} удалён")
+                return True
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            logger.error(f"Ошибка удаления перевала {pereval_id}: {e}")
+            return False
         finally:
             if conn:
                 conn.close()

@@ -19,13 +19,8 @@ DB_NAME = os.getenv("FSTR_DB_NAME", "pereval")
 app = Flask(__name__)
 swagger = Swagger(app)
 
-db_handler = DatabaseHandler(
-    host=DB_HOST,
-    port=DB_PORT,
-    user=DB_USER,
-    password=DB_PASS,
-    dbname=DB_NAME
-)
+db_handler = DatabaseHandler()
+
 
 # ----------------- Вспомогательные функции -----------------
 def parse_input(req):
