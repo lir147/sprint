@@ -13,9 +13,9 @@ class DatabaseHandler:
     def __init__(self, host=None, port=None, user=None, password=None, database=None):
         self.host = host or os.getenv('FSTR_DB_HOST', 'dpg-d363cj2li9vc738t3dn0-a.oregon-postgres.render.com')
         self.port = port or os.getenv('FSTR_DB_PORT', '5432')
-        self.user = user or os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'pereval_pvcx'))
+        self.user = user or os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'pereval_pvcx_user'))
         self.password = password or os.getenv('FSTR_DB_PASS', 'tqa9CrJHcFjPKwuuwaUbAmGzmjyhJarO')
-        self.database = database or os.getenv('FSTR_DB_NAME', 'pereval_pvcx_user')
+        self.database = database or os.getenv('FSTR_DB_NAME', 'pereval_pvcx')
 
     def get_connection(self):
         # Включаем SSL только если хост не localhost
