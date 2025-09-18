@@ -11,11 +11,11 @@ logger = logging.getLogger(__name__)
 # ----------------- DatabaseHandler -----------------
 class DatabaseHandler:
     def __init__(self, host=None, port=None, user=None, password=None, database=None):
-        self.host = host or os.getenv('FSTR_DB_HOST', 'localhost')
+        self.host = host or os.getenv('FSTR_DB_HOST', 'dpg-d35ti4hr0fns73bf88h0-a.oregon-postgres.render.com')
         self.port = port or os.getenv('FSTR_DB_PORT', '5432')
-        self.user = user or os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'postgres'))
-        self.password = password or os.getenv('FSTR_DB_PASS', '123654')
-        self.database = database or os.getenv('FSTR_DB_NAME', 'postgres')
+        self.user = user or os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'pereval_db_re10'))
+        self.password = password or os.getenv('FSTR_DB_PASS', 'SF5vJNAwNQroDywpRf8Rg6yQtdZMleWY')
+        self.database = database or os.getenv('FSTR_DB_NAME', 'pereval_db_re10_user')
 
     def get_connection(self):
         """Создать подключение к БД (Render-friendly)"""
