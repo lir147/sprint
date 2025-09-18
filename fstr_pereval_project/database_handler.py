@@ -27,7 +27,7 @@ class DatabaseHandler:
              password=self.password,
              dbname=self.database,
              sslmode='require',
-             sslrootcert='/opt/render/.postgresql/root.crt'
+             sslrootcert='system'
 )
 
     # ----------------- Вспомогательные методы -----------------
