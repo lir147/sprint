@@ -1,2 +1,0 @@
-python-3.11.4
-pip freeze > requirements.txt
