@@ -18,8 +18,8 @@ class DatabaseHandler:
         self.database = database or os.getenv('FSTR_DB_NAME', 'postgres')
 
     def get_connection(self):
-        """Создать подключение к БД"""
-        ssl_mode = 'disable' if self.host in ('localhost', '127.0.0.1') else 'require'
+        """Создать подключение к БД (Render-friendly)"""
+        ssl_mode = "disable" if self.host in ("localhost", "127.0.0.1") else "disable"
 
         return psycopg2.connect(
             host=self.host,
@@ -27,9 +27,10 @@ class DatabaseHandler:
             user=self.user,
             password=self.password,
             dbname=self.database,
-            sslmode="require",
+            sslmode=ssl_mode,
+            connect_timeout=10,
             cursor_factory=RealDictCursor
-)
+        )
 
     # ----------------- Вспомогательные методы -----------------
     def parse_json_field(self, field):
