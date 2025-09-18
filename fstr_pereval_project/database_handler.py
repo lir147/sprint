@@ -11,30 +11,28 @@ logger = logging.getLogger(__name__)
 # ----------------- DatabaseHandler -----------------
 class DatabaseHandler:
     def __init__(self, host=None, port=None, user=None, password=None, database=None):
-        self.host = host or os.getenv('FSTR_DB_HOST', 'dpg-d35ti4hr0fns73bf88h0-a.oregon-postgres.render.com')
+        self.host = host or os.getenv('FSTR_DB_HOST', 'localhost')
         self.port = port or os.getenv('FSTR_DB_PORT', '5432')
-        self.user = user or os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'pereval_db_re10'))
-        self.password = password or os.getenv('FSTR_DB_PASS', 'SF5vJNAwNQroDywpRf8Rg6yQtdZMleWY')
-        self.database = database or os.getenv('FSTR_DB_NAME', 'pereval_db_re10_user')
+        self.user = user or os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'postgres'))
+        self.password = password or os.getenv('FSTR_DB_PASS', '123654')
+        self.database = database or os.getenv('FSTR_DB_NAME', 'postgres')
 
     def get_connection(self):
-        """Создать подключение к БД (Render-friendly)"""
-        ssl_mode = "disable" if self.host in ("localhost", "127.0.0.1") else "disable"
-
+        """Подключение к базе с SSL для Render или без SSL для localhost"""
+        ssl_mode = 'disable' if self.host in ('localhost', '127.0.0.1') else 'require'
         return psycopg2.connect(
             host=self.host,
             port=self.port,
             user=self.user,
             password=self.password,
             dbname=self.database,
-            sslmode='require',
+            sslmode=ssl_mode,
             connect_timeout=10,
             cursor_factory=RealDictCursor
         )
 
     # ----------------- Вспомогательные методы -----------------
     def parse_json_field(self, field):
-        """Унификация обработки JSON-поля"""
         if isinstance(field, str):
             return json.loads(field)
         elif field is None:
@@ -52,17 +50,16 @@ class DatabaseHandler:
         try:
             conn = self.get_connection()
             with conn.cursor() as cur:
-                raw_data_json = json.dumps(raw_data, ensure_ascii=False)
-                images_json = json.dumps(images, ensure_ascii=False)
-                cur.execute(query, (raw_data_json, images_json))
+                cur.execute(query, (json.dumps(raw_data, ensure_ascii=False),
+                                    json.dumps(images, ensure_ascii=False)))
                 pereval_id = cur.fetchone()['id']
                 conn.commit()
                 logger.info(f"Перевал добавлен, ID: {pereval_id}")
                 return pereval_id
         except Exception as e:
-            logger.error(f"Ошибка добавления перевала: {e}")
             if conn:
                 conn.rollback()
+            logger.error(f"Ошибка добавления перевала: {e}")
             raise
         finally:
             if conn:
@@ -126,7 +123,6 @@ class DatabaseHandler:
                 raw_data = self.parse_json_field(record['raw_data'])
                 new_raw_data = data.get("raw_data", raw_data)
 
-                # Защита от изменения ФИО/email/phone
                 for field in ["fio", "email", "phone"]:
                     if field in new_raw_data and new_raw_data[field] != raw_data.get(field):
                         return False, f"Поле '{field}' редактировать нельзя"
@@ -174,38 +170,6 @@ class DatabaseHandler:
             if conn:
                 conn.close()
 
-    # ----------------- Получение всех областей -----------------
-    def get_all_areas(self):
-        query = "SELECT id, id_parent, title FROM pereval_areas ORDER BY id"
-        conn = None
-        try:
-            conn = self.get_connection()
-            with conn.cursor() as cur:
-                cur.execute(query)
-                return cur.fetchall()
-        except Exception as e:
-            logger.error(f"Ошибка получения областей: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-
-    # ----------------- Получение всех типов активности -----------------
-    def get_activities_types(self):
-        query = "SELECT id, title FROM spr_activities_types ORDER BY id"
-        conn = None
-        try:
-            conn = self.get_connection()
-            with conn.cursor() as cur:
-                cur.execute(query)
-                return cur.fetchall()
-        except Exception as e:
-            logger.error(f"Ошибка получения типов активностей: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-
     # ----------------- Добавление изображения -----------------
     def add_image(self, img_bytes):
         query = "INSERT INTO pereval_images (img, date_added) VALUES (%s, NOW()) RETURNING id"
@@ -243,7 +207,39 @@ class DatabaseHandler:
             if conn:
                 conn.close()
 
- # ----------------- Удаление перевала -----------------
+    # ----------------- Получение всех областей -----------------
+    def get_all_areas(self):
+        query = "SELECT id, id_parent, title FROM pereval_areas ORDER BY id"
+        conn = None
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cur:
+                cur.execute(query)
+                return cur.fetchall()
+        except Exception as e:
+            logger.error(f"Ошибка получения областей: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+
+    # ----------------- Получение всех типов активности -----------------
+    def get_activities_types(self):
+        query = "SELECT id, title FROM spr_activities_types ORDER BY id"
+        conn = None
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cur:
+                cur.execute(query)
+                return cur.fetchall()
+        except Exception as e:
+            logger.error(f"Ошибка получения типов активностей: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+
+    # ----------------- Удаление перевала -----------------
     def delete_pereval(self, pereval_id):
         query = "DELETE FROM pereval_added WHERE id = %s"
         conn = None
