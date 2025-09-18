@@ -27,7 +27,7 @@ class DatabaseHandler:
              password=self.password,
              dbname=self.database,
              sslmode='require',
-             sslrootcert='system'
+             sslrootcert='C:\\postgres_ssl\\root.crt'
 )
 
     # ----------------- Вспомогательные методы -----------------
