@@ -21,7 +21,6 @@ swagger = Swagger(app)
 
 db_handler = DatabaseHandler()
 
-
 # ----------------- Вспомогательные функции -----------------
 def parse_input(req):
     """Универсальная обработка данных из JSON или формы"""

@@ -10,13 +10,12 @@ logger = logging.getLogger(__name__)
 
 # ----------------- DatabaseHandler -----------------
 class DatabaseHandler:
-    def __init__(self, host=None, port=None, user=None, password=None, database=None):
-        self.host = host or os.getenv('FSTR_DB_HOST', 'localhost')
-        self.port = port or os.getenv('FSTR_DB_PORT', '5432')
-        self.user = user or os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'postgres'))
-        self.password = password or os.getenv('FSTR_DB_PASS', '123654')
-        self.database = database or os.getenv('FSTR_DB_NAME', 'postgres')
-
+    def __init__(self):
+        self.host = os.getenv('FSTR_DB_HOST', 'localhost')
+        self.port = os.getenv('FSTR_DB_PORT', '5432')
+        self.user = os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'postgres'))
+        self.password = os.getenv('FSTR_DB_PASS', '123654')
+        self.database = os.getenv('FSTR_DB_NAME', 'postgres')
 
     def get_connection(self):
         """Создать подключение к БД"""
@@ -154,7 +153,7 @@ class DatabaseHandler:
 
     # ----------------- Получение перевалов по email -----------------
     def get_perevals_by_email(self, email):
-        query = "SELECT id, raw_data, images, status, date_added, date_updated FROM pereval_added WHERE (raw_data->'user'->>'email') = %s"
+        query = "SELECT id, raw_data, images, status, date_added, date_updated FROM pereval_added WHERE (raw_data->>'email') = %s"
         conn = None
         try:
             conn = self.get_connection()
@@ -168,95 +167,6 @@ class DatabaseHandler:
         except Exception as e:
             logger.error(f"Ошибка получения перевалов по email {email}: {e}")
             raise
-        finally:
-            if conn:
-                conn.close()
-
-    # ----------------- Получение всех областей -----------------
-    def get_all_areas(self):
-        query = "SELECT id, id_parent, title FROM pereval_areas ORDER BY id"
-        conn = None
-        try:
-            conn = self.get_connection()
-            with conn.cursor() as cur:
-                cur.execute(query)
-                return cur.fetchall()
-        except Exception as e:
-            logger.error(f"Ошибка получения областей: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-
-    # ----------------- Получение всех типов активности -----------------
-    def get_activities_types(self):
-        query = "SELECT id, title FROM spr_activities_types ORDER BY id"
-        conn = None
-        try:
-            conn = self.get_connection()
-            with conn.cursor() as cur:
-                cur.execute(query)
-                return cur.fetchall()
-        except Exception as e:
-            logger.error(f"Ошибка получения типов активностей: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-
-    # ----------------- Добавление изображения -----------------
-    def add_image(self, img_bytes):
-        query = "INSERT INTO pereval_images (img, date_added) VALUES (%s, NOW()) RETURNING id"
-        conn = None
-        try:
-            conn = self.get_connection()
-            with conn.cursor() as cur:
-                cur.execute(query, (psycopg2.Binary(img_bytes),))
-                image_id = cur.fetchone()['id']
-                conn.commit()
-                return image_id
-        except Exception as e:
-            if conn:
-                conn.rollback()
-            logger.error(f"Ошибка добавления изображения: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-
-    # ----------------- Получение изображения по ID -----------------
-    def get_image_by_id(self, image_id):
-        query = "SELECT img FROM pereval_images WHERE id = %s"
-        conn = None
-        try:
-            conn = self.get_connection()
-            with conn.cursor() as cur:
-                cur.execute(query, (image_id,))
-                record = cur.fetchone()
-                return record['img'] if record else None
-        except Exception as e:
-            logger.error(f"Ошибка получения изображения {image_id}: {e}")
-            raise
-        finally:
-            if conn:
-                conn.close()
-
- # ----------------- Удаление перевала -----------------
-    def delete_pereval(self, pereval_id):
-        query = "DELETE FROM pereval_added WHERE id = %s"
-        conn = None
-        try:
-            conn = self.get_connection()
-            with conn.cursor() as cur:
-                cur.execute(query, (pereval_id,))
-                conn.commit()
-                logger.info(f"Перевал {pereval_id} удалён")
-                return True
-        except Exception as e:
-            if conn:
-                conn.rollback()
-            logger.error(f"Ошибка удаления перевала {pereval_id}: {e}")
-            return False
         finally:
             if conn:
                 conn.close()
