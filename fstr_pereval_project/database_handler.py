@@ -4,21 +4,21 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import json
 
-# Логирование
+# ----------------- Логирование -----------------
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
+# ----------------- DatabaseHandler -----------------
 class DatabaseHandler:
     def __init__(self):
         self.host = os.getenv('FSTR_DB_HOST', 'localhost')
         self.port = os.getenv('FSTR_DB_PORT', '5432')
-        self.user = os.getenv('FSTR_DB_LOGIN', 'postgres')
+        self.user = os.getenv('FSTR_DB_LOGIN', os.getenv('FSTR_LOGIN', 'postgres'))
         self.password = os.getenv('FSTR_DB_PASS', '123654')
         self.database = os.getenv('FSTR_DB_NAME', 'postgres')
 
     def get_connection(self):
-        """Подключение к БД"""
+        """Создать подключение к БД"""
         return psycopg2.connect(
             host=self.host,
             port=self.port,
@@ -29,7 +29,16 @@ class DatabaseHandler:
             cursor_factory=RealDictCursor
         )
 
-    # ========== ДОБАВЛЕНИЕ ПЕРЕВАЛА ==========
+    # ----------------- Вспомогательные методы -----------------
+    def parse_json_field(self, field):
+        """Унификация обработки JSON-поля"""
+        if isinstance(field, str):
+            return json.loads(field)
+        elif field is None:
+            return []
+        return field
+
+    # ----------------- Добавление перевала -----------------
     def add_pereval(self, raw_data, images):
         query = """
         INSERT INTO pereval_added (raw_data, images, status, date_added)
@@ -42,7 +51,6 @@ class DatabaseHandler:
             with conn.cursor() as cur:
                 raw_data_json = json.dumps(raw_data, ensure_ascii=False)
                 images_json = json.dumps(images, ensure_ascii=False)
-
                 cur.execute(query, (raw_data_json, images_json))
                 pereval_id = cur.fetchone()['id']
                 conn.commit()
@@ -57,35 +65,29 @@ class DatabaseHandler:
             if conn:
                 conn.close()
 
-    # ========== ВСЕ ПЕРЕВАЛЫ ==========
+    # ----------------- Получение всех перевалов -----------------
     def get_all_perevals(self):
-        query = "SELECT id, raw_data, images, status, date_added FROM pereval_added ORDER BY date_added DESC"
+        query = "SELECT id, raw_data, images, status, date_added, date_updated FROM pereval_added ORDER BY date_added DESC"
         conn = None
         try:
             conn = self.get_connection()
             with conn.cursor() as cur:
                 cur.execute(query)
                 results = cur.fetchall()
-
                 for r in results:
-                    if isinstance(r['raw_data'], str):
-                        r['raw_data'] = json.loads(r['raw_data'])
-                    if isinstance(r['images'], str):
-                        r['images'] = json.loads(r['images'])
-                    elif r['images'] is None:
-                        r['images'] = []
-
+                    r['raw_data'] = self.parse_json_field(r['raw_data'])
+                    r['images'] = self.parse_json_field(r['images'])
                 return results
         except Exception as e:
-            logger.error(f"Ошибка получения перевалов: {e}")
+            logger.error(f"Ошибка получения всех перевалов: {e}")
             raise
         finally:
             if conn:
                 conn.close()
 
-    # ========== ПОЛУЧЕНИЕ ОДНОГО ПЕРЕВАЛА ==========
+    # ----------------- Получение перевала по ID -----------------
     def get_pereval_by_id(self, pereval_id):
-        query = "SELECT id, raw_data, images, status, date_added FROM pereval_added WHERE id = %s"
+        query = "SELECT id, raw_data, images, status, date_added, date_updated FROM pereval_added WHERE id = %s"
         conn = None
         try:
             conn = self.get_connection()
@@ -94,14 +96,8 @@ class DatabaseHandler:
                 pereval = cur.fetchone()
                 if not pereval:
                     return None
-
-                if isinstance(pereval['raw_data'], str):
-                    pereval['raw_data'] = json.loads(pereval['raw_data'])
-                if isinstance(pereval['images'], str):
-                    pereval['images'] = json.loads(pereval['images'])
-                elif pereval['images'] is None:
-                    pereval['images'] = []
-
+                pereval['raw_data'] = self.parse_json_field(pereval['raw_data'])
+                pereval['images'] = self.parse_json_field(pereval['images'])
                 return pereval
         except Exception as e:
             logger.error(f"Ошибка получения перевала {pereval_id}: {e}")
@@ -110,13 +106,12 @@ class DatabaseHandler:
             if conn:
                 conn.close()
 
-    # ========== ОБНОВЛЕНИЕ ПЕРЕВАЛА ==========
+    # ----------------- Обновление перевала -----------------
     def update_pereval(self, pereval_id, data):
         conn = None
         try:
             conn = self.get_connection()
             with conn.cursor() as cur:
-                # Проверяем статус
                 cur.execute("SELECT status, raw_data, images FROM pereval_added WHERE id = %s", (pereval_id,))
                 record = cur.fetchone()
                 if not record:
@@ -125,20 +120,16 @@ class DatabaseHandler:
                 if record['status'] != 'new':
                     return False, "Редактирование запрещено: статус не 'new'"
 
-                # Защита от изменения ФИО/email/phone
-                raw_data = record['raw_data']
-                if isinstance(raw_data, str):
-                    raw_data = json.loads(raw_data)
-
+                raw_data = self.parse_json_field(record['raw_data'])
                 new_raw_data = data.get("raw_data", raw_data)
 
+                # Защита от изменения ФИО/email/phone
                 for field in ["fio", "email", "phone"]:
                     if field in new_raw_data and new_raw_data[field] != raw_data.get(field):
                         return False, f"Поле '{field}' редактировать нельзя"
 
-                # Обновляем разрешённые поля
                 updated_raw = json.dumps(new_raw_data, ensure_ascii=False)
-                updated_images = data.get("images", record["images"])
+                updated_images = data.get("images", self.parse_json_field(record['images']))
                 if isinstance(updated_images, (dict, list)):
                     updated_images = json.dumps(updated_images, ensure_ascii=False)
 
@@ -146,7 +137,7 @@ class DatabaseHandler:
                     UPDATE pereval_added
                     SET raw_data = %s,
                         images = %s,
-                        date_added = NOW()
+                        date_updated = NOW()
                     WHERE id = %s
                 """, (updated_raw, updated_images, pereval_id))
                 conn.commit()
@@ -160,24 +151,18 @@ class DatabaseHandler:
             if conn:
                 conn.close()
 
-    # ========== ВСЕ ПЕРЕВАЛЫ ПО EMAIL ==========
+    # ----------------- Получение перевалов по email -----------------
     def get_perevals_by_email(self, email):
-        query = "SELECT id, raw_data, images, status, date_added FROM pereval_added WHERE (raw_data->>'email') = %s"
+        query = "SELECT id, raw_data, images, status, date_added, date_updated FROM pereval_added WHERE (raw_data->>'email') = %s"
         conn = None
         try:
             conn = self.get_connection()
             with conn.cursor() as cur:
                 cur.execute(query, (email,))
                 results = cur.fetchall()
-
                 for r in results:
-                    if isinstance(r['raw_data'], str):
-                        r['raw_data'] = json.loads(r['raw_data'])
-                    if isinstance(r['images'], str):
-                        r['images'] = json.loads(r['images'])
-                    elif r['images'] is None:
-                        r['images'] = []
-
+                    r['raw_data'] = self.parse_json_field(r['raw_data'])
+                    r['images'] = self.parse_json_field(r['images'])
                 return results
         except Exception as e:
             logger.error(f"Ошибка получения перевалов по email {email}: {e}")
