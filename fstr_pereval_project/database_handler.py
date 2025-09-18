@@ -28,7 +28,6 @@ class DatabaseHandler:
             password=self.password,
             dbname=self.database,
             sslmode="require",
-            sslrootcert=None,
             cursor_factory=RealDictCursor
 )
 
