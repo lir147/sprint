@@ -26,7 +26,7 @@ class DatabaseHandler:
              user=self.user,
              password=self.password,
              dbname=self.database,
-             sslmode='verify-full',
+             sslmode='require',
              sslrootcert='/opt/render/.postgresql/root.crt'
 )
 
