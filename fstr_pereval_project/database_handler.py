@@ -27,9 +27,10 @@ class DatabaseHandler:
             user=self.user,
             password=self.password,
             dbname=self.database,
-            sslmode='verify-full',
+            sslmode="require",
+            sslrootcert=None,
             cursor_factory=RealDictCursor
-        )
+)
 
     # ----------------- Вспомогательные методы -----------------
     def parse_json_field(self, field):
