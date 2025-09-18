@@ -18,7 +18,8 @@ class DatabaseHandler:
         self.database = database or os.getenv('FSTR_DB_NAME', 'postgres')
 
     def get_connection(self):
-        ssl_mode = 'disable' if self.host in ('localhost', '127.0.0.1') else 'require'
+        """Подключение с автоматическим выбором SSL"""
+        ssl_mode = "require" if self.host != "localhost" else "disable"
         conn = psycopg2.connect(
             host=self.host,
             port=self.port,
