@@ -10,7 +10,7 @@ db_pass = os.getenv("FSTR_PASS")
 db_name = os.getenv("FSTR_DB_NAME", "pereval_db_re10_user")
 
 # ----------------- Строка подключения с SSL -----------------
-DATABASE_URL = f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}?sslmode=require"
+DATABASE_URL = f"postgresql+psycopg2://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}?sslmode=require"
 
 # ----------------- SQLAlchemy engine -----------------
 engine = create_engine(DATABASE_URL)
