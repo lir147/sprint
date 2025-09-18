@@ -6,25 +6,22 @@ from dotenv import load_dotenv
 from io import BytesIO
 from database_handler import DatabaseHandler
 
-# ----------------- Настройка -----------------
+# ----------------- Настройка окружения и логирования -----------------
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
-DB_HOST = os.getenv("FSTR_DB_HOST")
-DB_PORT = os.getenv("FSTR_DB_PORT")
-DB_USER = os.getenv("FSTR_LOGIN")
-DB_PASS = os.getenv("FSTR_PASS")
-DB_NAME = os.getenv("FSTR_DB_NAME", "pereval")
-
+# ----------------- Создание приложения Flask и Swagger -----------------
 app = Flask(__name__)
 swagger = Swagger(app)
 
-db_handler = DatabaseHandler()
-
+# ----------------- Подключение к базе -----------------
+db_handler = DatabaseHandler()  # использует db.py с SSL
 
 # ----------------- Вспомогательные функции -----------------
 def parse_input(req):
-    """Универсальная обработка данных из JSON или формы"""
+    """
+    Универсальная функция для обработки данных из JSON или формы
+    """
     if req.is_json:
         data = req.get_json()
         return data.get("raw_data"), data.get("images", [])
@@ -38,13 +35,19 @@ def parse_input(req):
         return raw_data, images
 
 # ----------------- Эндпоинты -----------------
+
 @app.route('/')
 def index():
+    """
+    Главная страница
+    """
     return render_template("index.html")
+
 
 @app.route('/perevals', methods=['GET'])
 def get_perevals():
-    """Получить список всех перевалов
+    """
+    Получить список всех перевалов
     ---
     tags:
       - Perevals
@@ -59,9 +62,11 @@ def get_perevals():
         logging.error(f"Ошибка при выводе перевалов: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/submitData', methods=['GET', 'POST'])
 def submit_data():
-    """Добавление нового перевала
+    """
+    Добавление нового перевала
     ---
     tags:
       - Perevals
@@ -103,9 +108,11 @@ def submit_data():
         logging.error(f"Ошибка в submit_data: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/submitData/<int:pereval_id>', methods=['GET'])
 def get_pereval(pereval_id):
-    """Получить перевал по ID
+    """
+    Получить перевал по ID
     ---
     tags:
       - Perevals
@@ -127,9 +134,11 @@ def get_pereval(pereval_id):
         logging.error(f"Ошибка при получении перевала {pereval_id}: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/submitData/<int:pereval_id>', methods=['PATCH'])
 def update_pereval(pereval_id):
-    """Обновить перевал, если статус 'new'
+    """
+    Обновить перевал, если статус 'new'
     ---
     tags:
       - Perevals
@@ -165,9 +174,11 @@ def update_pereval(pereval_id):
         logging.error(f"Ошибка при обновлении перевала {pereval_id}: {e}")
         return jsonify({"state": 0, "message": str(e)}), 500
 
+
 @app.route('/userPerevals', methods=['GET'])
 def get_perevals_by_email():
-    """Получить перевалы пользователя по email
+    """
+    Получить перевалы пользователя по email
     ---
     tags:
       - Perevals
@@ -190,9 +201,11 @@ def get_perevals_by_email():
         logging.error(f"Ошибка при получении перевалов по email {email}: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/areas', methods=['GET'])
 def get_areas():
-    """Получить все области
+    """
+    Получить все области
     ---
     tags:
       - Areas
@@ -207,9 +220,11 @@ def get_areas():
         logging.error(f"Ошибка получения областей: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/activities', methods=['GET'])
 def get_activities():
-    """Получить все типы активности
+    """
+    Получить все типы активности
     ---
     tags:
       - Activities
@@ -224,9 +239,11 @@ def get_activities():
         logging.error(f"Ошибка получения активностей: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/uploadImage', methods=['POST'])
 def upload_image():
-    """Загрузить изображение
+    """
+    Загрузить изображение
     ---
     tags:
       - Images
@@ -250,9 +267,11 @@ def upload_image():
         logging.error(f"Ошибка загрузки изображения: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/images/<int:image_id>', methods=['GET'])
 def get_image(image_id):
-    """Получить изображение по ID
+    """
+    Получить изображение по ID
     ---
     tags:
       - Images
@@ -274,6 +293,7 @@ def get_image(image_id):
         logging.error(f"Ошибка получения изображения {image_id}: {e}")
         return jsonify({"error": str(e)}), 500
 
-# ----------------- Запуск -----------------
+
+# ----------------- Запуск приложения -----------------
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8080, debug=True)
