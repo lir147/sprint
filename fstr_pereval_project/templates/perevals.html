@@ -39,7 +39,7 @@
                     {% endif %}
                 </td>
                 <td>{{ p.status }}</td>
-                <td>{{ p.date_added }}</td>
+                <td>{{ p.date_added.strftime("%Y-%m-%d %H:%M") if p.date_added else "" }}</td>
             </tr>
         {% endfor %}
         </tbody>
