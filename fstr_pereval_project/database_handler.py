@@ -17,16 +17,17 @@ class DatabaseHandler:
         self.password = password or os.getenv('FSTR_DB_PASS', '123654')
         self.database = database or os.getenv('FSTR_DB_NAME', 'postgres')
 
-
     def get_connection(self):
         """Создать подключение к БД"""
+        ssl_mode = 'disable' if self.host in ('localhost', '127.0.0.1') else 'require'
+
         return psycopg2.connect(
             host=self.host,
             port=self.port,
             user=self.user,
             password=self.password,
             dbname=self.database,
-            sslmode='require',
+            sslmode=ssl_mode,
             cursor_factory=RealDictCursor
         )
 
