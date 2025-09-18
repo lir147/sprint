@@ -17,3 +17,4 @@ services:
         value: "123654"
       - key: FSTR_DB_NAME
         value: "postgres"
+    runtime: go
