@@ -170,3 +170,72 @@ class DatabaseHandler:
         finally:
             if conn:
                 conn.close()
+
+    # ----------------- Получение всех областей -----------------
+    def get_all_areas(self):
+        query = "SELECT id, id_parent, title FROM pereval_areas ORDER BY id"
+        conn = None
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cur:
+                cur.execute(query)
+                return cur.fetchall()
+        except Exception as e:
+            logger.error(f"Ошибка получения областей: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+
+    # ----------------- Получение всех типов активности -----------------
+    def get_activities_types(self):
+        query = "SELECT id, title FROM spr_activities_types ORDER BY id"
+        conn = None
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cur:
+                cur.execute(query)
+                return cur.fetchall()
+        except Exception as e:
+            logger.error(f"Ошибка получения типов активностей: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+
+    # ----------------- Добавление изображения -----------------
+    def add_image(self, img_bytes):
+        query = "INSERT INTO pereval_images (img, date_added) VALUES (%s, NOW()) RETURNING id"
+        conn = None
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cur:
+                cur.execute(query, (psycopg2.Binary(img_bytes),))
+                image_id = cur.fetchone()['id']
+                conn.commit()
+                return image_id
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            logger.error(f"Ошибка добавления изображения: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+
+    # ----------------- Получение изображения по ID -----------------
+    def get_image_by_id(self, image_id):
+        query = "SELECT img FROM pereval_images WHERE id = %s"
+        conn = None
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cur:
+                cur.execute(query, (image_id,))
+                record = cur.fetchone()
+                return record['img'] if record else None
+        except Exception as e:
+            logger.error(f"Ошибка получения изображения {image_id}: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
