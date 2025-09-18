@@ -21,15 +21,14 @@ class DatabaseHandler:
         """Подключение к базе с SSL для Render или без SSL для localhost"""
         ssl_mode = 'disable' if self.host in ('localhost', '127.0.0.1') else 'require'
         return psycopg2.connect(
-            host=self.host,
-            port=self.port,
-            user=self.user,
-            password=self.password,
-            dbname=self.database,
-            sslmode=ssl_mode,
-            connect_timeout=10,
-            cursor_factory=RealDictCursor
-        )
+             host=self.host,
+             port=self.port,
+             user=self.user,
+             password=self.password,
+             dbname=self.database,
+             sslmode='verify-full',
+             sslrootcert='/opt/render/.postgresql/root.crt'
+)
 
     # ----------------- Вспомогательные методы -----------------
     def parse_json_field(self, field):
