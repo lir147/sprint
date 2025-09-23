@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pereval
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      # Keep both sets to satisfy current code fallbacks
+      FSTR_DB_HOST: localhost
+      FSTR_DB_PORT: 5432
+      FSTR_LOGIN: postgres
+      FSTR_PASS: postgres
+      FSTR_DB_NAME: pereval
+      FSTR_DB_LOGIN: postgres
+      FSTR_DB_PASS: postgres
+      PORT: 10000
+      FLASK_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install ruff black isort mypy pytest pytest-cov
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..20}; do
+            pg_isready -h localhost -p 5432 -U postgres && break
+            echo "Postgres is unavailable - sleeping"
+            sleep 3
+          done
+
+      - name: Initialize DB schema
+        run: |
+          psql postgresql://postgres:postgres@localhost:5432/pereval -f pereval.sql
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Imports check (isort)
+        run: isort --check-only .
+
+      - name: Type check (mypy)
+        run: mypy . || true
+
+      - name: Run tests
+        run: pytest -q --maxfail=1 --disable-warnings --cov . --cov-report=term-missing

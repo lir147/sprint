@@ -1,0 +1,36 @@
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+extend-exclude = [
+  "migrations",
+]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["app", "database_handler", "db"]
+skip = ["migrations"]
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["migrations"]
+# Select a reasonable baseline of rules (pyflakes + pycodestyle + isort + pyupgrade)
+select = ["E", "F", "I", "UP"]
+ignore = [
+  "E501",  # handled by black
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "database_handler", "db"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
+disallow_untyped_defs = false
+check_untyped_defs = false
+no_implicit_optional = true
+exclude = "migrations"
