@@ -36,8 +36,8 @@
    python app.py
    ```
 
-   * Сервер будет доступен по адресу: [http://localhost:8080](http://localhost:8080)
-   * Swagger-документация: [http://localhost:8080/apidocs](http://localhost:8080/apidocs)
+   * Сервер будет доступен по адресу: [http://localhost:10000](http://https://sprint-2-0gus.onrender.com/)
+   * Swagger-документация: [http://localhost:10000/apidocs](http://https://sprint-2-0gus.onrender.com/apidocs)
 
 ---
 
@@ -122,5 +122,5 @@
 
    * Статус перевала должен быть `'new'`.
 2. Для изображений используйте метод `db_handler.add_image()`.
-3. Проверьте Swagger-документацию для всех эндпоинтов: [http://localhost:8080/apidocs](http://localhost:8080/apidocs).
+3. Проверьте Swagger-документацию для всех эндпоинтов: [http://localhost:10000/apidocs](http://https://sprint-2-0gus.onrender.com/apidocs).
 4. Логи ошибок выводятся в консоль. Проверяйте подключение к БД при возникновении проблем.
